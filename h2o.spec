@@ -31,6 +31,7 @@ BuildRequires:	bison
 BuildRequires:	ruby-devel
 %endif
 Requires:	ca-certificates
+Requires:	perl-Encode
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %define	_bindir %{_sbindir}
