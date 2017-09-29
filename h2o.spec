@@ -12,6 +12,7 @@ License:	MIT
 Group:		Networking/Daemons/HTTP
 Source0:	https://github.com/h2o/h2o/archive/v%{version}/%{name}-%{version}.tar.gz
 # Source0-md5:	efc3a98cd21d3b91d66b2a99b1518255
+Patch0:		system-ca.patch
 URL:		https://h2o.examp1e.net/
 BuildRequires:	cmake >= 2.8.11
 BuildRequires:	libstdc++-devel
@@ -24,6 +25,7 @@ BuildRequires:	zlib-devel
 BuildRequires:	bison
 BuildRequires:	ruby-devel
 %endif
+Requires:	ca-certificates
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %define	_bindir %{_sbindir}
@@ -60,6 +62,7 @@ you to build your own software using H2O.
 
 %prep
 %setup -q
+%patch0 -p1
 
 %build
 install -d build
@@ -99,8 +102,6 @@ rm -rf $RPM_BUILD_ROOT
 %attr(755,root,root) %{_datadir}/%{name}/kill-on-close
 %attr(755,root,root) %{_datadir}/%{name}/setuidgid
 %attr(755,root,root) %{_datadir}/%{name}/start_server
-# TODO: use ca-certificates package
-%{_datadir}/%{name}/ca-bundle.crt
 
 %if %{with mruby}
 %{_datadir}/%{name}/mruby
