@@ -1,111 +1,156 @@
-#!/bin/bash
+#!/bin/sh
 #
-# chkconfig: - 85 15
+# H2O - the optimized HTTP/1, HTTP/2 server
+#
+# chkconfig: 345 85 15
 # description: H2O - the optimized HTTP/1, HTTP/2 server
 # processname: h2o
 # config: /etc/h2o/h2o.conf
 # pidfile: /var/run/h2o/h2o.pid
 
-### BEGIN INIT INFO
-# Provides: h2o
-# Required-Start: $local_fs $remote_fs $network $named
-# Required-Stop: $local_fs $remote_fs $network
-# Should-Start: distcache
-# Short-Description: start and stop h2o HTTP Server
-# Description: H2O - the optimized HTTP/1, HTTP/2 server
-### END INIT INFO
-
-# Source function library.
+# Source function library
 . /etc/rc.d/init.d/functions
 
-if [ -f /etc/sysconfig/h2o ]; then
-    . /etc/sysconfig/h2o
+# Get network config
+. /etc/sysconfig/network
+
+# Check that networking is up.
+if is_yes "${NETWORKING}"; then
+	if [ ! -f /var/lock/subsys/network -a "$1" != stop -a "$1" != status ]; then
+		msg_network_down "h2o"
+		exit 1
+	fi
+else
+	exit 0
 fi
+
+# Get service config - may override defaults
+[ -f /etc/sysconfig/h2o ] && . /etc/sysconfig/h2o
 
 # Path to the server binary, and short-form for messages.
 h2o=/usr/sbin/h2o
 prog=h2o
 configfile=/etc/h2o/h2o.conf
 lockfile=${LOCKFILE-/var/lock/subsys/h2o}
-RETVAL=0
+pidfile=/var/run/h2o.pid
 options="-m daemon -c $configfile"
 
-pidfile=`sed -ne 's|pid-file:\s*\([-_./0-9a-zA-Z]\{1,\}\)|\1|p' $configfile`
-if [ -z "$pidfile" ]; then
-    echo $"pid-file must be defined in $configfile"
-    exit 1
-fi
+# configtest itself
+# must return non-zero if check failed
+# output is discarded if checkconfig is ran without details
+configtest() {
+	$h2o -t -c ${configfile}
+}
+
+# wrapper for configtest
+checkconfig() {
+	local details=${1:-0}
+
+	if [ $details = 1 ]; then
+		# run config test and display report (status action)
+		show "Checking %s configuration" "h2o"; busy
+		local out
+		out=$(configtest 2>&1)
+		RETVAL=$?
+		if [ $RETVAL = 0 ]; then
+			ok
+		else
+			fail
+		fi
+		[ "$out" ] && echo >&2 "$out"
+	else
+		# run config test and abort with nice message if failed
+		# (for actions checking status before action).
+		configtest >/dev/null 2>&1
+		RETVAL=$?
+		if [ $RETVAL != 0 ]; then
+			show "Checking %s configuration" "h2o"; fail
+			nls 'Configuration test failed. See details with %s "checkconfig"' $0
+			exit $RETVAL
+		fi
+	fi
+}
 
 start() {
-    echo -n $"Starting $prog: "
-    daemon --pidfile=${pidfile} $h2o $options
-    RETVAL=$?
-    echo
-    [ $RETVAL = 0 ] && touch ${lockfile}
-    return $RETVAL
+	# Check if the service is already running?
+	if [ -f $lockfile ]; then
+		msg_already_running "h2o"
+		return
+	fi
+
+	msg_starting "h2o"
+	daemon --pidfile $pidfile $h2o $options
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && touch $lockfile
 }
 
 stop() {
-    echo -n $"Stopping $prog: "
-    killproc -p ${pidfile} $h2o -TERM
-    RETVAL=$?
-    echo
-    [ $RETVAL = 0 ] && rm -f ${lockfile}
+	if [ ! -f $lockfile ]; then
+		msg_not_running "h2o"
+		return
+	fi
+
+	# Stop daemons.
+	msg_stopping "h2o"
+	killproc --pidfile $pidfile h2o -TERM
+	rm -f $lockfile
 }
 
 reload() {
-    echo -n $"Reloading $prog: "
-    if ! $h2o -t -c ${configfile} >&/dev/null; then
-        RETVAL=6
-        echo $"not reloading due to configuration syntax error"
-        failure $"not reloading $h2o due to configuration syntax error"
-    else
-        # Force LSB behaviour from killproc
-        LSB=1 killproc -p ${pidfile} $h2o -HUP
-        RETVAL=$?
-        if [ $RETVAL -eq 7 ]; then
-            failure $"h2o shutdown"
-        fi
-    fi
-    echo
+	if [ ! -f $lockfile ]; then
+		msg_not_running "h2o"
+		RETVAL=7
+		return
+	fi
+
+	checkconfig
+	msg_reloading "h2o"
+	killproc --pidfile $pidfile h2o -HUP
+	RETVAL=$?
 }
 
-configtest() {
-    $h2o -t -c ${configfile}
+condrestart() {
+	if [ ! -f $lockfile ]; then
+		msg_not_running "h2o"
+		RETVAL=$1
+		return
+	fi
+
+	checkconfig
+	stop
+	start
 }
 
+RETVAL=0
 # See how we were called.
 case "$1" in
   start)
-        start
-        ;;
+	start
+	;;
   stop)
-        stop
-        ;;
-  status)
-        status -p ${pidfile} $h2o
-        RETVAL=$?
-        ;;
+	stop
+	;;
   restart)
-        stop
-        start
-        ;;
-  condrestart|try-restart)
-        if status -p ${pidfile} $h2o >&/dev/null; then
-            stop
-            start
-        fi
-        ;;
-  force-reload|reload)
-        reload
-        ;;
-  configtest)
-        configtest
-        RETVAL=$?
-        ;;
+	checkconfig
+	stop
+	start
+	;;
+  try-restart)
+	condrestart 0
+	;;
+  reload|force-reload)
+	reload
+	;;
+  checkconfig|configtest)
+	checkconfig 1
+	;;
+  status)
+	status --pidfile $pidfile h2o
+	RETVAL=$?
+	;;
   *)
-        echo $"Usage: $prog {start|stop|restart|condrestart|try-restart|force-reload|reload|status|configtest}"
-        RETVAL=2
+	msg_usage "$0 {start|stop|restart|try-restart|reload|force-reload|checkconfig|status}"
+	exit 3
 esac
 
 exit $RETVAL
