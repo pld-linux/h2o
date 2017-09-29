@@ -1,3 +1,5 @@
+# TODO
+# - libwslay for websockets
 Summary:	H2O - an optimized HTTP server with support for HTTP/1.x and HTTP/2
 Name:		h2o
 Version:	2.2.2
@@ -7,10 +9,13 @@ Group:		Networking/Daemons/HTTP
 Source0:	https://github.com/h2o/h2o/archive/v%{version}/%{name}-%{version}.tar.gz
 # Source0-md5:	efc3a98cd21d3b91d66b2a99b1518255
 URL:		https://github.com/h2o/h2o
-BuildRequires:	cmake
+BuildRequires:	cmake >= 2.8.11
+BuildRequires:	libstdc++-devel
+BuildRequires:	libuv-devel >= 1.0.0
+BuildRequires:	openssl-devel >= 1.0.2
+BuildRequires:	pkgconfig
 BuildRequires:	yaml-devel
-# 1.0.2+ recommended
-BuildRequires:	openssl-devel
+BuildRequires:	zlib-devel
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
