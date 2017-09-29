@@ -7,7 +7,7 @@
 Summary:	H2O - an optimized HTTP server with support for HTTP/1.x and HTTP/2
 Name:		h2o
 Version:	2.2.2
-Release:	0.8
+Release:	0.9
 License:	MIT
 Group:		Networking/Daemons/HTTP
 Source0:	https://github.com/h2o/h2o/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -137,6 +137,9 @@ fi
 %attr(755,root,root) %{_datadir}/%{name}/kill-on-close
 %attr(755,root,root) %{_datadir}/%{name}/setuidgid
 %attr(755,root,root) %{_datadir}/%{name}/start_server
+
+%attr(710,root,nobody) %dir %{_localstatedir}/run/h2o
+%attr(700,root,root) %dir %{_localstatedir}/log/h2o
 
 %if %{with mruby}
 %{_datadir}/%{name}/mruby
