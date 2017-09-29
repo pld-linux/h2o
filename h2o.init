@@ -32,7 +32,7 @@ h2o=/usr/sbin/h2o
 prog=h2o
 configfile=/etc/h2o/h2o.conf
 lockfile=${LOCKFILE-/var/lock/subsys/h2o}
-pidfile=/var/run/h2o.pid
+pidfile=/var/run/h2o/h2o.pid
 options="-m daemon -c $configfile"
 
 # configtest itself
