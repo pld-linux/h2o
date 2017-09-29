@@ -138,7 +138,7 @@ fi
 %attr(755,root,root) %{_datadir}/%{name}/setuidgid
 %attr(755,root,root) %{_datadir}/%{name}/start_server
 
-%attr(710,root,nobody) %dir %{_localstatedir}/run/h2o
+%attr(710,root,root) %dir %{_localstatedir}/run/h2o
 %attr(700,root,root) %dir %{_localstatedir}/log/h2o
 
 %if %{with mruby}
