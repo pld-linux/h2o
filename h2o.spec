@@ -26,18 +26,37 @@ BuildRequires:	ruby-devel
 %endif
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
+%define	_bindir %{_sbindir}
+
 %description
-H2O is a very fast HTTP server written in C. It can also be used as a
-library.
+H2O is a very fast HTTP server written in C
 
-%package devel
-Summary:	Header files for h2o library
-Summary(pl.UTF-8):	Pliki nagłówkowe biblioteki h2o
+%package -n libh2o
+Summary:	H2O Library compiled with libuv
 Group:		Development/Libraries
-Requires:	%{name}-libs = %{version}-%{release}
 
-%description devel
-Header files for h2o library.
+%description -n libh2o
+libh2o package provides H2O library compiled with libuv which allows
+you to link your own software to H2O.
+
+%package -n libh2o-evloop
+Summary:	H2O Library compiled with its own event loop
+Group:		Development/Libraries
+
+%description -n libh2o-evloop
+libh2o-evloop package provides H2O library compiled with its own event
+loop which allows you to link your own software to H2O.
+
+%package -n libh2o-devel
+Summary:	Development interfaces for H2O
+Group:		Development/Libraries
+Requires:	libh2o = %{version}-%{release}
+Requires:	libh2o-evloop = %{version}-%{release}
+Requires:	openssl-devel
+
+%description -n libh2o-devel
+libh2o-devel package provides H2O header files and helpers which allow
+you to build your own software using H2O.
 
 %prep
 %setup -q
@@ -46,6 +65,7 @@ Header files for h2o library.
 install -d build
 cd build
 %cmake \
+	-DBUILD_SHARED_LIBS=on \
 	-DWITH_MRUBY=%{!?with_mruby:OFF}%{?with_mruby:ON} \
 	..
 %{__make} \
@@ -61,17 +81,16 @@ rm -rf $RPM_BUILD_ROOT
 %clean
 rm -rf $RPM_BUILD_ROOT
 
-%post	-p /sbin/ldconfig
-%postun	-p /sbin/ldconfig
+%post	-n libh2o -p /sbin/ldconfig
+%postun	-n libh2o -p /sbin/ldconfig
+
+%post	-n libh2o-evloop -p /sbin/ldconfig
+%postun	-n libh2o-evloop -p /sbin/ldconfig
 
 %files
 %defattr(644,root,root,755)
 %doc README.md Changes LICENSE
-%attr(755,root,root) %{_bindir}/h2o
-%{_libdir}/libh2o.so.0.13
-%attr(755,root,root) %{_libdir}/libh2o.so.*.*.*
-%{_libdir}/libh2o-evloop.so.0.13
-%attr(755,root,root) %{_libdir}/libh2o-evloop.so.*.*.*
+%attr(755,root,root) %{_sbindir}/h2o
 %dir %{_datadir}/%{name}
 %{_datadir}/%{name}/status
 %attr(755,root,root) %{_datadir}/%{name}/annotate-backtrace-symbols
@@ -87,7 +106,17 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/%{name}/mruby
 %endif
 
-%files devel
+%files -n libh2o
+%defattr(644,root,root,755)
+%{_libdir}/libh2o.so.0.13
+%attr(755,root,root) %{_libdir}/libh2o.so.*.*.*
+
+%files -n libh2o-evloop
+%defattr(644,root,root,755)
+%{_libdir}/libh2o-evloop.so.0.13
+%attr(755,root,root) %{_libdir}/libh2o-evloop.so.*.*.*
+
+%files -n libh2o-devel
 %defattr(644,root,root,755)
 %{_includedir}/h2o.h
 %{_includedir}/h2o
