@@ -7,7 +7,7 @@
 Summary:	H2O - an optimized HTTP server with support for HTTP/1.x and HTTP/2
 Name:		h2o
 Version:	2.2.2
-Release:	0.3
+Release:	0.8
 License:	MIT
 Group:		Networking/Daemons/HTTP
 Source0:	https://github.com/h2o/h2o/archive/v%{version}/%{name}-%{version}.tar.gz
