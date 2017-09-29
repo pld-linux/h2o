@@ -1,5 +1,9 @@
 # TODO
 # - libwslay for websockets
+#
+# Conditional build:
+%bcond_without	mruby		# using mruby scripting support (Rack-based)
+
 Summary:	H2O - an optimized HTTP server with support for HTTP/1.x and HTTP/2
 Name:		h2o
 Version:	2.2.2
@@ -8,7 +12,7 @@ License:	MIT
 Group:		Networking/Daemons/HTTP
 Source0:	https://github.com/h2o/h2o/archive/v%{version}/%{name}-%{version}.tar.gz
 # Source0-md5:	efc3a98cd21d3b91d66b2a99b1518255
-URL:		https://github.com/h2o/h2o
+URL:		https://h2o.examp1e.net/
 BuildRequires:	cmake >= 2.8.11
 BuildRequires:	libstdc++-devel
 BuildRequires:	libuv-devel >= 1.0.0
@@ -16,6 +20,10 @@ BuildRequires:	openssl-devel >= 1.0.2
 BuildRequires:	pkgconfig
 BuildRequires:	yaml-devel
 BuildRequires:	zlib-devel
+%if %{with mruby}
+BuildRequires:	bison
+BuildRequires:	ruby-devel
+%endif
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
@@ -37,7 +45,9 @@ Header files for h2o library.
 %build
 install -d build
 cd build
-%cmake ..
+%cmake \
+	-DWITH_MRUBY=%{!?with_mruby:OFF}%{?with_mruby:ON} \
+	..
 %{__make} \
 	V=1
 
@@ -63,7 +73,6 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/libh2o-evloop.so.0.13
 %attr(755,root,root) %{_libdir}/libh2o-evloop.so.*.*.*
 %dir %{_datadir}/%{name}
-%{_datadir}/%{name}/mruby
 %{_datadir}/%{name}/status
 %attr(755,root,root) %{_datadir}/%{name}/annotate-backtrace-symbols
 %attr(755,root,root) %{_datadir}/%{name}/fastcgi-cgi
@@ -73,6 +82,10 @@ rm -rf $RPM_BUILD_ROOT
 %attr(755,root,root) %{_datadir}/%{name}/start_server
 # TODO: use ca-certificates package
 %{_datadir}/%{name}/ca-bundle.crt
+
+%if %{with mruby}
+%{_datadir}/%{name}/mruby
+%endif
 
 %files devel
 %defattr(644,root,root,755)
