@@ -7,7 +7,7 @@
 Summary:	H2O - an optimized HTTP server with support for HTTP/1.x and HTTP/2
 Name:		h2o
 Version:	2.2.2
-Release:	0.2
+Release:	0.3
 License:	MIT
 Group:		Networking/Daemons/HTTP
 Source0:	https://github.com/h2o/h2o/archive/v%{version}/%{name}-%{version}.tar.gz
@@ -122,6 +122,7 @@ fi
 %defattr(644,root,root,755)
 %doc README.md Changes LICENSE
 %attr(755,root,root) %{_sbindir}/h2o
+%dir %{_sysconfdir}/%{name}
 %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/%{name}/h2o.conf
 %config(noreplace) %verify(not md5 mtime size) /etc/logrotate.d/h2o
 %attr(754,root,root) /etc/rc.d/init.d/h2o
