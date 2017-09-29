@@ -1,0 +1,16 @@
+/var/log/h2o/error.log {
+    missingok
+    notifempty
+    delaycompress
+    copytruncate
+}
+
+/var/log/h2o/access.log {
+    missingok
+    notifempty
+    sharedscripts
+    delaycompress
+    postrotate
+        /bin/systemctl reload h2o.service > /dev/null 2>/dev/null || true
+    endscript
+}
